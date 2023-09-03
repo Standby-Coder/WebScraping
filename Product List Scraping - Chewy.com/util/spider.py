@@ -51,7 +51,7 @@ def get_product_urls(soup):
 
 def spider(url, next_level_list):
     headers = ({'User-Agent':
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36 OPR/101.0.0.0',
+            'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
             'Accept-Language': 'en-US, en;q=0.5'})
     
     product_url_list_new, next_level_list_new = [] , []
