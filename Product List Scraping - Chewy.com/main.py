@@ -13,6 +13,13 @@ from tqdm import tqdm
 from util.get_product_details import *
 from util.spider import *
 
+<<<<<<< Updated upstream
+=======
+import multiprocessing as mp
+import threading 
+from queue import Queue
+
+>>>>>>> Stashed changes
 
 # # print everything to a file
 # import sys
@@ -57,7 +64,7 @@ def main(url, df1=None):
     # url = ["https://www.chewy.com/frisco-steel-framed-elevated-dog-bed/dp/139415",
     #         "https://www.chewy.com/american-journey-minced-salmon-tuna/dp/160945",
     #         "https://www.chewy.com/simparica-trio-chewable-tablet-dogs/dp/251350",
-    #         "https://www.chewy.com/carprofen-generic-caplets-dogs/dp/173410"]
+            # "https://www.chewy.com/carprofen-generic-caplets-dogs/dp/173410"]
 
     df2 = pd.DataFrame(
         columns=["item_number", "url", "title", "brand", "advertised_price", "autoship_price", "weight", "desc",
@@ -99,12 +106,20 @@ def main(url, df1=None):
                 if prod_info["item_number"] in df2["item_number"].values:
                     continue
 
+<<<<<<< Updated upstream
                 # df2 = df2.append(prod_info, ignore_index=True
                 df2 = pd.concat([df2, pd.DataFrame(prod_info, index=[0])], ignore_index= True)
 
             for j in next_level_list:
                 if j not in next_level:
                     next_level.append(j)
+=======
+                df = pd.concat([df, pd.DataFrame(prod_info, index = [0])], ignore_index = True)
+            
+            # for j in next_level_list:
+            #     if j not in next_level:
+            #         next_level.append(j)
+>>>>>>> Stashed changes
 
             print("Next Level Length = ", len(next_level))
 
@@ -148,7 +163,11 @@ def combine_df(mode="save"):
     csv_list.sort()
 
     for csv in csv_list:
+<<<<<<< Updated upstream
         df = pd.concat([df,pd.read_csv(f"./prodlist/{csv}")], ignore_index= True)
+=======
+        df = pd.concat([df, pd.read_csv("./prodlist/" + csv)], ignore_index = True)
+>>>>>>> Stashed changes
 
     if mode == "save":
         df.to_csv("./prodlist/product_info.csv", index=False)
@@ -157,7 +176,7 @@ def combine_df(mode="save"):
 
 
 if __name__ == "__main__":
-    start_url = ["/"]
+    start_url = ["/", "/carprofen-generic-caplets-dogs/dp/173410"]
 
     df = None
     if os.path.exists("./prodlist"):
