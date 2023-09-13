@@ -10,16 +10,15 @@ warnings.filterwarnings("ignore")
 
 from tqdm import tqdm
 from util.get_product_details import *
-from util.spider import *
+from util.spiderv2 import *
 
 import multiprocessing as mp
 import threading 
 from queue import Queue
 
+import lxml
+import time
 
-# # print everything to a file
-# import sys
-# sys.stdout = open("output.txt", "w")
 
 def get_product_info(url):
     headers = ({'User-Agent':
@@ -27,9 +26,12 @@ def get_product_info(url):
             'Accept-Language': 'en-US, en;q=0.5'})
     response = requests.get(url, headers = headers)
     soup = bs4.BeautifulSoup(response.text, "html.parser")
+    
     spec_info = get_spec(soup)
 
     product_info = {}
+    if spec_info["Prescription"] == "Non-Rx":
+        return product_info
     
     product_info["url"] = url
     product_info["title"] = get_title(soup)
@@ -55,23 +57,20 @@ def print_product_info(prod_info):
     print("Prescription: " + prod_info["Prescription"])
 
 def main(url, df1 = None):
-    # url = ["https://www.chewy.com/frisco-steel-framed-elevated-dog-bed/dp/139415",
-    #         "https://www.chewy.com/american-journey-minced-salmon-tuna/dp/160945",
-    #         "https://www.chewy.com/simparica-trio-chewable-tablet-dogs/dp/251350",
-            # "https://www.chewy.com/carprofen-generic-caplets-dogs/dp/173410"]
 
     df = pd.DataFrame(columns = ["item_number", "url", "title", "brand", "advertised_price", "autoship_price", "weight", "desc", "Prescription"])
 
     next_level = url
 
-    if df1 is None:
-        i = 0
-    else:
-        i = len(os.listdir("./prodlist"))
+    # if df1 is None:
+    i = 0
+    # else:
+    #     i = len(os.listdir("./prodlist"))
 
     product_url_list = []
 
     try:
+        start= time.time()
         for next_url in next_level:
             if next_url.startswith("https://www.chewy.com"):
                 product_url_list, next_level_list = spider(next_url, [])
@@ -88,6 +87,10 @@ def main(url, df1 = None):
                     prod_info = get_product_info(j)
                 else:
                     prod_info = get_product_info("https://www.chewy.com" + j)
+                
+                if prod_info == {}:
+                    continue
+                
                 if prod_info["item_number"] == "":
                     continue
 
@@ -113,29 +116,34 @@ def main(url, df1 = None):
     except Exception as e:
         print("Unexpected error, dumping current df......")
         df.to_csv(f"./prodlist/product_info_{i}.csv", index = False)
-        e.print_stack()
+        print(e)
 
     df.to_csv(f"./prodlist/product_info_{i}.csv", index = False)
-        
+    print("Time taken: " + str(time.time() - start))    
 
 def debug(url):
     headers = ({'User-Agent':
             'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.157 Safari/537.36',
             'Accept-Language': 'en-US, en;q=0.5'})
     response = requests.get(url, headers = headers)
-    soup = bs4.BeautifulSoup(response.text, "html.parser")
+    soup = bs4.BeautifulSoup(response.text, "lxml")
     # info = soup.find("div", attrs={"data-event-label" : "product-detail-description"})
     # head = info.find(lambda tag:tag.name == "h3" and "Details" in tag.text)
     # div = head.find_next("div")
     # desc = div.find("p")
+    c = 0
+    p = []
     for a in soup.find_all('a', href=True):
         if re.search("/dp/", a['href']):
-            print(a['href'])
+            if a['href'] not in p:
+                p.append(a['href'])  
+            c = c + 1
+
+    print(p)
+    print(len(p))
 
 def combine_df(mode = "save"):
     df = pd.DataFrame(columns = ["item_number", "url", "title", "brand", "advertised_price", "autoship_price", "weight", "desc", "Prescription"])
-    
-    # list of csv files named as product_info
     csv_list = os.listdir("./prodlist")
     csv_list = [i for i in csv_list if i.startswith("product_info")]
     csv_list.sort()
@@ -149,14 +157,14 @@ def combine_df(mode = "save"):
         return df
     
 if __name__ == "__main__":
-    start_url = ["/", "/carprofen-generic-caplets-dogs/dp/173410"]
+    start_url = ["/"]
 
     df = None
-    if os.path.exists("./prodlist"):
-        df = combine_df(mode = "return")
+    # if os.path.exists("./prodlist"):
+    #     df = combine_df(mode = "return")
 
     main(start_url, df)
-    # debug("https://www.chewy.com/b/birthday-shop-2700")
+    # debug("https://www.chewy.com/")
     # debug("https://www.chewy.com/simparica-trio-chewable-tablet-dogs/dp/251350")
     # debug("https://www.chewy.com/american-journey-minced-salmon-tuna/dp/160945")
 
